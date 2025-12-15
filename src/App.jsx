@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { CodeIcon, BrainIcon, SparklesIcon, KeyIcon, RocketIcon, LinkIcon, CpuIcon, ZapIcon, UsersIcon, ToolIcon, ChartIcon, HandshakeIcon, PaletteIcon, TargetIcon } from './components/Icons'
+import { caseStudyImages } from './data/caseStudyImages'
 
 const services = [
   {
@@ -203,21 +204,15 @@ const aiCases = [
 
 export default function App() {
   const location = useLocation()
-  const [prevPathname, setPrevPathname] = useState(location.pathname)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    console.log('Current location:', location.pathname)
-    
-    // Auto-refresh when navigating to a new route (except initial load)
-    if (location.pathname !== prevPathname && prevPathname !== '') {
-      console.log('Route changed from', prevPathname, 'to', location.pathname, '- refreshing page...')
-      setTimeout(() => {
-        window.location.reload()
-      }, 100)
-    }
-    
-    setPrevPathname(location.pathname)
-  }, [location.pathname, prevPathname])
+    // Fun loading screen - non-blocking, just for visual delight
+    const timer = setTimeout(() => {
+      setIsLoading(false)
+    }, 1500)
+    return () => clearTimeout(timer)
+  }, [])
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -262,20 +257,24 @@ export default function App() {
   const isLanding = location.pathname === '/'
 
   return (
-    <div className="min-h-screen bg-cloud text-ink">
-      <SiteHeader hideNav={isLanding} />
-      <ScrollManager />
-      <main className="mx-auto flex max-w-6xl flex-col gap-14 px-6 py-12 md:py-16">
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/software" element={<SoftwarePage />} />
-          <Route path="/ai" element={<AIPage />} />
-          <Route path="/story" element={<FounderStoryPage />} />
-          <Route path="/contact" element={<ContactPage standalone />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </main>
-    </div>
+    <>
+      {isLoading && <LoadingScreen />}
+      <div className={`min-h-screen bg-cloud text-ink flex flex-col ${isLoading ? 'opacity-0' : 'opacity-100 transition-opacity duration-500'}`}>
+        <SiteHeader hideNav={isLanding} />
+        <ScrollManager />
+        <main className="mx-auto flex max-w-6xl flex-col gap-14 px-6 py-12 md:py-16 flex-1 w-full">
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/software" element={<SoftwarePage />} />
+            <Route path="/ai" element={<AIPage />} />
+            <Route path="/story" element={<FounderStoryPage />} />
+            <Route path="/contact" element={<ContactPage standalone />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </main>
+        <Footer />
+      </div>
+    </>
   )
 }
 
@@ -330,6 +329,8 @@ function LogoIcon() {
 }
 
 function SiteHeader({ hideNav = false }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-cloud/85 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
@@ -343,22 +344,35 @@ function SiteHeader({ hideNav = false }) {
           </div>
         </Link>
         {!hideNav && (
-          <nav className="hidden items-center gap-6 text-sm font-medium text-slate-700 md:flex">
-            <Link className="transition hover:text-ink hover:scale-105" to="/software">
-              Software
-            </Link>
-            <Link className="transition hover:text-ink hover:scale-105" to="/ai">
-              AI
-            </Link>
-            <Link className="transition hover:text-ink hover:scale-105" to="/story">
-              Our Story
-            </Link>
-            <Link className="transition hover:text-ink hover:scale-105" to="/contact">
-              Contact
-            </Link>
-          </nav>
+          <>
+            <nav className="hidden items-center gap-6 text-sm font-medium text-slate-700 md:flex">
+              <Link className="transition hover:text-ink hover:scale-105" to="/software">
+                Software
+              </Link>
+              <Link className="transition hover:text-ink hover:scale-105" to="/ai">
+                AI
+              </Link>
+              <Link className="transition hover:text-ink hover:scale-105" to="/story">
+                Our Story
+              </Link>
+              <Link className="transition hover:text-ink hover:scale-105" to="/contact">
+                Contact
+              </Link>
+            </nav>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden flex items-center justify-center p-2 rounded-lg hover:bg-slate-100 transition-colors"
+              aria-label="Toggle menu"
+            >
+              <div className="w-6 h-6 flex flex-col justify-center items-center gap-1.5">
+                <span className={`w-full h-0.5 bg-ink rounded-full transition-all duration-300 ${mobileMenuOpen ? 'rotate-45 translate-y-2' : ''}`} />
+                <span className={`w-full h-0.5 bg-ink rounded-full transition-all duration-300 ${mobileMenuOpen ? 'opacity-0' : ''}`} />
+                <span className={`w-full h-0.5 bg-ink rounded-full transition-all duration-300 ${mobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
+              </div>
+            </button>
+          </>
         )}
-        <div className="flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-3">
           <Link
             to="/contact"
             className="rounded-full border border-slate-800 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] transition hover:bg-slate-900 hover:text-white hover:scale-105"
@@ -367,6 +381,59 @@ function SiteHeader({ hideNav = false }) {
           </Link>
         </div>
       </div>
+      {!hideNav && mobileMenuOpen && (
+        <div className="md:hidden border-t border-slate-200 bg-cloud/95 backdrop-blur">
+          <nav className="mx-auto max-w-6xl px-6 py-4 flex flex-col gap-4">
+            <Link
+              to="/software"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center justify-between py-3 px-4 rounded-xl bg-white border border-slate-200 text-sm font-medium text-slate-700 transition hover:border-ink hover:text-ink hover:bg-slate-50"
+            >
+              <span>Software</span>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </Link>
+            <Link
+              to="/ai"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center justify-between py-3 px-4 rounded-xl bg-white border border-slate-200 text-sm font-medium text-slate-700 transition hover:border-accent2 hover:text-accent2 hover:bg-slate-50"
+            >
+              <span>AI</span>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </Link>
+            <Link
+              to="/story"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center justify-between py-3 px-4 rounded-xl bg-white border border-slate-200 text-sm font-medium text-slate-700 transition hover:border-ink hover:text-ink hover:bg-slate-50"
+            >
+              <span>Our Story</span>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </Link>
+            <Link
+              to="/contact"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center justify-between py-3 px-4 rounded-xl bg-white border border-slate-200 text-sm font-medium text-slate-700 transition hover:border-accent hover:text-accent hover:bg-slate-50"
+            >
+              <span>Contact</span>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </Link>
+            <Link
+              to="/contact"
+              onClick={() => setMobileMenuOpen(false)}
+              className="mt-2 w-full rounded-full bg-ink px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-slate-900"
+            >
+              Start a Project
+            </Link>
+          </nav>
+        </div>
+      )}
     </header>
   )
 }
@@ -860,34 +927,160 @@ function Process() {
 }
 
 function CaseStudies() {
+  const [selectedCase, setSelectedCase] = useState(null)
+  const [activeImageIndex, setActiveImageIndex] = useState(0)
+
+  const caseStudyKeys = Object.keys(caseStudyImages)
+
+  const openCaseStudy = (slug) => {
+    setSelectedCase(slug)
+    setActiveImageIndex(0)
+  }
+
+  const closeCaseStudy = () => {
+    setSelectedCase(null)
+    setActiveImageIndex(0)
+  }
+
+  const currentCase = selectedCase ? caseStudyImages[selectedCase] : null
+
   return (
-    <section id="work" className="rounded-3xl border border-slate-200 bg-white p-8 shadow-soft md:p-12" data-reveal>
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="font-mono text-xs uppercase tracking-[0.3em] text-slate-500">Case Study Snapshots</p>
-          <h3 className="mt-3 font-display text-3xl font-bold tracking-tight text-ink md:text-4xl">
-            Report-style cards. Clean. Simple.
-          </h3>
-        </div>
-        <div className="text-xs uppercase tracking-[0.25em] text-slate-500">Selected Work</div>
-      </div>
-      <div className="mt-8 grid gap-6 md:grid-cols-3" data-stagger-container>
-        {caseStudies.map((item, index) => (
-          <div
-            key={item.title}
-            data-stagger
-            className="interactive-card rounded-2xl border border-slate-200 bg-slate-50/80 p-6 transition hover:border-ink hover:bg-white focus:outline-none focus:ring-2 focus:ring-ink focus:ring-offset-2"
-          >
-            <div className="flex items-center justify-between text-xs font-mono uppercase tracking-[0.25em] text-slate-500">
-              <span>{item.meta}</span>
-              <span className="text-accent transition hover:scale-110">{String(index + 1).padStart(2, '0')}</span>
-            </div>
-            <h4 className="mt-4 font-display text-xl font-semibold tracking-tight text-ink">{item.title}</h4>
-            <p className="mt-3 text-sm leading-relaxed text-slate-700">{item.summary}</p>
+    <>
+      <section id="work" className="rounded-3xl border border-slate-200 bg-white p-8 shadow-soft md:p-12" data-reveal>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="font-mono text-xs uppercase tracking-[0.3em] text-slate-500">Case Study Snapshots</p>
+            <h3 className="mt-3 font-display text-3xl font-bold tracking-tight text-ink md:text-4xl">
+              Selected Work
+            </h3>
           </div>
-        ))}
-      </div>
-    </section>
+          <div className="text-xs uppercase tracking-[0.25em] text-slate-500">Click to explore</div>
+        </div>
+        <div className="mt-8 grid gap-6 md:grid-cols-3" data-stagger-container>
+          {caseStudyKeys.map((slug, index) => {
+            const item = caseStudyImages[slug]
+            const hasImages = item.images && item.images.length > 0
+            return (
+              <button
+                key={item.title}
+                data-stagger
+                onClick={() => hasImages && openCaseStudy(slug)}
+                className={`interactive-card rounded-2xl border border-slate-200 bg-slate-50/80 p-6 text-left transition hover:border-ink hover:bg-white focus:outline-none focus:ring-2 focus:ring-ink focus:ring-offset-2 ${hasImages ? 'cursor-pointer' : 'cursor-default opacity-75'}`}
+              >
+                <div className="flex items-center justify-between text-xs font-mono uppercase tracking-[0.25em] text-slate-500">
+                  <span>{item.meta}</span>
+                  <span className="text-accent transition hover:scale-110">{String(index + 1).padStart(2, '0')}</span>
+                </div>
+                <h4 className="mt-4 font-display text-xl font-semibold tracking-tight text-ink">{item.title}</h4>
+                <p className="mt-3 text-sm leading-relaxed text-slate-700">{item.summary}</p>
+                {hasImages && (
+                  <div className="mt-4 flex items-center gap-2 text-xs font-medium text-accent">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                    <span>View {item.images.length} screenshots</span>
+                  </div>
+                )}
+                {!hasImages && (
+                  <div className="mt-4 text-xs text-slate-400">Coming soon</div>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </section>
+
+      {/* Case Study Modal */}
+      {selectedCase && currentCase && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/60 backdrop-blur-sm" onClick={closeCaseStudy}>
+          <div 
+            className="relative w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 md:px-8">
+              <div>
+                <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent">{currentCase.meta}</p>
+                <h3 className="mt-1 font-display text-xl font-bold tracking-tight text-ink md:text-2xl">
+                  {currentCase.title}
+                </h3>
+              </div>
+              <button
+                onClick={closeCaseStudy}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-500 transition hover:bg-slate-100 hover:text-ink"
+                aria-label="Close"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Image Tabs */}
+            {currentCase.images.length > 1 && (
+              <div className="flex gap-2 border-b border-slate-200 px-6 py-3 md:px-8 overflow-x-auto">
+                {currentCase.images.map((img, index) => (
+                  <button
+                    key={img.id}
+                    onClick={() => setActiveImageIndex(index)}
+                    className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition ${
+                      activeImageIndex === index
+                        ? 'bg-ink text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-ink'
+                    }`}
+                  >
+                    {img.caption}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Image Display */}
+            <div className="overflow-auto p-4 md:p-6" style={{ maxHeight: 'calc(90vh - 180px)' }}>
+              {currentCase.images[activeImageIndex] && (
+                <div className="space-y-4">
+                  <img
+                    src={currentCase.images[activeImageIndex].src}
+                    alt={currentCase.images[activeImageIndex].alt}
+                    className="w-full rounded-2xl border border-slate-200 shadow-soft"
+                  />
+                  <p className="text-center text-sm text-slate-600">
+                    {currentCase.images[activeImageIndex].alt}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Navigation Arrows */}
+            {currentCase.images.length > 1 && (
+              <div className="absolute bottom-20 left-0 right-0 flex justify-center gap-4 md:bottom-24">
+                <button
+                  onClick={() => setActiveImageIndex((prev) => (prev === 0 ? currentCase.images.length - 1 : prev - 1))}
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 border border-slate-200 text-slate-600 shadow-lg transition hover:bg-white hover:text-ink"
+                  aria-label="Previous image"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="15 18 9 12 15 6" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setActiveImageIndex((prev) => (prev === currentCase.images.length - 1 ? 0 : prev + 1))}
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 border border-slate-200 text-slate-600 shadow-lg transition hover:bg-white hover:text-ink"
+                  aria-label="Next image"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 
@@ -1089,7 +1282,72 @@ function FAQ({ accent = 'accent' }) {
 }
 
 function ContactSection({ accent = 'accent' }) {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    project_focus: 'Software Build',
+    message: ''
+  })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitStatus, setSubmitStatus] = useState('')
+  const [showSuccess, setShowSuccess] = useState(false)
+
   const borderClass = accent === 'accent2' ? 'border-accent2' : 'border-accent'
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    setSubmitStatus('')
+
+    try {
+      const response = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          access_key: '9f1bb7f4-6de9-45f2-828c-2501f87af361',
+          name: formData.name,
+          email: formData.email,
+          subject: `New Project Inquiry: ${formData.project_focus}`,
+          message: `Project Focus: ${formData.project_focus}\n\n${formData.message}`,
+          from_name: 'VirtuKey Contact Form'
+        })
+      })
+
+      const result = await response.json()
+      
+      if (result.success) {
+        setSubmitStatus('success')
+        setShowSuccess(true)
+        setFormData({
+          name: '',
+          email: '',
+          project_focus: 'Software Build',
+          message: ''
+        })
+        setTimeout(() => {
+          setShowSuccess(false)
+        }, 5000)
+      } else {
+        setSubmitStatus('error')
+      }
+    } catch (error) {
+      setSubmitStatus('error')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <section
       id="contact"
@@ -1156,104 +1414,125 @@ function ContactSection({ accent = 'accent' }) {
             </div>
           </div>
         </div>
-        <form className="rounded-2xl border border-slate-200 bg-slate-50/80 p-6" onSubmit={(event) => event.preventDefault()}>
-          <div className="grid gap-4">
-            <label className="text-sm font-semibold text-slate-800">
-              Name
-              <input
-                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-ink outline-none transition focus:border-ink"
-                placeholder="Your name"
-                required
-              />
-            </label>
-            <label className="text-sm font-semibold text-slate-800">
-              Email
-              <input
-                type="email"
-                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-ink outline-none transition focus:border-ink"
-                placeholder="you@company.com"
-                required
-              />
-            </label>
-            <label className="text-sm font-semibold text-slate-800">
-              Project Focus
-              <select
-                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-ink outline-none transition focus:border-ink hover:border-slate-400 cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2724%27 height=%2724%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%230f172a%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3e%3cpolyline points=%276 9 12 15 18 9%27%3e%3c/polyline%3e%3c/svg%3e')] bg-[length:1.25rem] bg-[right_0.75rem_center] bg-no-repeat pr-10"
-                defaultValue="Software Build"
+        <div className="relative">
+          {showSuccess && (
+            <div className="absolute -top-4 left-0 right-0 z-10 rounded-2xl bg-green-50 border border-green-200 p-4 text-center">
+              <div className="flex items-center justify-center gap-2 text-green-700">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                  <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
+                <span className="font-medium">Message sent successfully! We'll respond within 24 hours.</span>
+              </div>
+            </div>
+          )}
+          <form onSubmit={handleSubmit} className="rounded-2xl border border-slate-200 bg-slate-50/80 p-6">
+            <div className="grid gap-4">
+              <label className="text-sm font-semibold text-slate-800">
+                Name
+                <input
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-ink outline-none transition focus:border-ink"
+                  placeholder="Your name"
+                  required
+                  disabled={isSubmitting}
+                />
+              </label>
+              <label className="text-sm font-semibold text-slate-800">
+                Email
+                <input
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-ink outline-none transition focus:border-ink"
+                  placeholder="you@company.com"
+                  required
+                  disabled={isSubmitting}
+                />
+              </label>
+              <label className="text-sm font-semibold text-slate-800">
+                Project Focus
+                <select
+                  name="project_focus"
+                  value={formData.project_focus}
+                  onChange={handleInputChange}
+                  className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-ink outline-none transition focus:border-ink hover:border-slate-400 cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2724%27 height=%2724%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%230f172a%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3e%3cpolyline points=%276 9 12 15 18 9%27%3e%3c/polyline%3e%3c/svg%3e')] bg-[length:1.25rem] bg-[right_0.75rem_center] bg-no-repeat pr-10"
+                  disabled={isSubmitting}
+                >
+                  <option value="Software Build">Software Build</option>
+                  <option value="Systems Integration">Systems Integration</option>
+                  <option value="API Automation">API Automation</option>
+                  <option value="AI Integration">AI Integration</option>
+                  <option value="Product Discovery">Product Discovery</option>
+                </select>
+              </label>
+              <label className="text-sm font-semibold text-slate-800">
+                Notes
+                <textarea
+                  name="message"
+                  value={formData.message}
+                  onChange={handleInputChange}
+                  className="mt-2 min-h-[120px] w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-ink outline-none transition focus:border-ink"
+                  placeholder="What do you want to build or connect?"
+                  disabled={isSubmitting}
+                />
+              </label>
+              {submitStatus === 'error' && (
+                <div className="rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+                  Something went wrong. Please try again or email us directly.
+                </div>
+              )}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="mt-2 w-full rounded-full bg-ink px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-900 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
-                <option value="Software Build">Software Build</option>
-                <option value="Systems Integration">Systems Integration</option>
-                <option value="API Automation">API Automation</option>
-                <option value="AI Integration">AI Integration</option>
-                <option value="Product Discovery">Product Discovery</option>
-              </select>
-            </label>
-            <label className="text-sm font-semibold text-slate-800">
-              Notes
-              <textarea
-                className="mt-2 min-h-[120px] w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-ink outline-none transition focus:border-ink"
-                placeholder="What do you want to build or connect?"
-              />
-            </label>
-            <button
-              type="submit"
-              className="mt-2 w-full rounded-full bg-ink px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-900"
-            >
-              Submit
-            </button>
-          </div>
-        </form>
+                {isSubmitting ? 'Sending...' : 'Submit'}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </section>
   )
 }
 
-function BrandsSection() {
-  const brands = [
-    { name: 'Stripe', category: 'Payment Processing' },
-    { name: 'Salesforce', category: 'CRM Platform' },
-    { name: 'AWS', category: 'Cloud Infrastructure' },
-    { name: 'OpenAI', category: 'AI Services' },
-    { name: 'Shopify', category: 'E-commerce' },
-    { name: 'Twilio', category: 'Communications' },
-    { name: 'MongoDB', category: 'Database' },
-    { name: 'Vercel', category: 'Deployment' },
+function ClientLogos() {
+  const clients = [
+    { logo: 'https://i.ibb.co/jvPR7vqZ/Black-Beige-Modern-Typography-Monogram-Logo.png', alt: 'Client Logo' },
+    { logo: 'https://i.ibb.co/kbr9Xkq/Minimalist-Line-Business-Logo.png', alt: 'Client Logo' },
+    { logo: 'https://i.ibb.co/HL4PVsLs/2-E245-F71-0-AEE-4115-AA3-A-A88-BD353-F8-A0-L0-001-09-11-2025-13-45-40.png', alt: 'Client Logo' },
+    { logo: 'https://i.ibb.co/TDNrmxMm/39-ED2-CF2-1318-4328-82-D9-C370-D5-D05676-L0-001-09-11-2025-13-43-01.jpg', alt: 'Client Logo' },
   ]
 
   return (
     <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-soft md:p-12" data-reveal>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.3em] text-slate-500">Partners</p>
+          <p className="font-mono text-xs uppercase tracking-[0.3em] text-slate-500">Clients</p>
           <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-ink md:text-4xl">
-            Brands we work with.
+            Trusted by great teams.
           </h2>
-          <p className="mt-3 text-base text-slate-700">
-            Integrating with leading platforms to deliver seamless, powerful solutions.
-          </p>
         </div>
-        <div className="text-xs uppercase tracking-[0.25em] text-slate-500">Technologies</div>
+        <div className="text-xs uppercase tracking-[0.25em] text-slate-500">Partners</div>
       </div>
       <div className="mt-10 grid grid-cols-2 gap-6 md:grid-cols-4" data-stagger-container>
-        {brands.map((brand, index) => (
+        {clients.map((client, index) => (
           <div
-            key={brand.name}
+            key={index}
             data-stagger
-            className="interactive-card group flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-slate-50/80 p-6 text-center transition hover:border-ink hover:bg-white hover-glow focus:outline-none focus:ring-2 focus:ring-ink focus:ring-offset-2"
+            className="group flex items-center justify-center rounded-2xl border border-slate-200 bg-white p-6 transition hover:border-ink hover-lift"
           >
-            <div className="h-12 w-12 rounded-full border-2 border-slate-300 bg-white flex items-center justify-center mb-3 group-hover:border-ink transition-colors">
-              <div className="h-6 w-6 bg-gradient-to-br from-ink to-slate-600 rounded-sm"></div>
-            </div>
-            <h3 className="font-display text-lg font-semibold tracking-tight text-ink">{brand.name}</h3>
-            <p className="mt-1 text-sm text-slate-600">{brand.category}</p>
+            <img 
+              src={client.logo} 
+              alt={client.alt}
+              className="h-16 w-auto object-contain grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300"
+            />
           </div>
         ))}
-      </div>
-      <div className="mt-8 rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100 p-6 text-center">
-        <p className="text-base font-medium text-slate-800">
-          We specialize in integrating these platforms and many more to create cohesive, 
-          powerful business systems that work exactly the way you need them to.
-        </p>
       </div>
     </section>
   )
@@ -1266,7 +1545,7 @@ function FounderStoryPage() {
       <FounderJourney />
       <FounderValues />
       <FounderVision />
-      <BrandsSection />
+      <ClientLogos />
       <TeamSection />
       <ContactSection />
       <ClosingCTA />
@@ -1609,6 +1888,104 @@ function ClosingCTA({ accent = 'accent' }) {
         </div>
       </div>
     </section>
+  )
+}
+
+function LoadingScreen() {
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-cloud">
+      <div className="flex flex-col items-center">
+        {/* Logo with subtle glow */}
+        <div className="relative animate-float">
+          <LogoIcon />
+        </div>
+        
+        {/* Running person on track */}
+        <div className="mt-8 relative w-48">
+          <div className="h-0.5 w-full rounded-full bg-slate-200" />
+          <div className="absolute -top-5 animate-runner">
+            <svg className="w-5 h-5 text-ink" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="4" r="2"/>
+              <path d="M7 10.5L9.5 8L12 9L15 6.5L16.5 8L14 11L12 10L9 13L7 12V10.5Z"/>
+              <path d="M9 13L6.5 19.5H9L11 15" strokeWidth="1.5" strokeLinecap="round" fill="none" stroke="currentColor"/>
+              <path d="M12 10L15 19H12.5" strokeWidth="1.5" strokeLinecap="round" fill="none" stroke="currentColor"/>
+            </svg>
+          </div>
+        </div>
+        
+        {/* Text */}
+        <p className="mt-6 font-mono text-[10px] uppercase tracking-[0.3em] text-slate-400">
+          Loading...
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function Footer() {
+  const currentYear = new Date().getFullYear()
+  
+  return (
+    <footer className="border-t border-slate-200 bg-white">
+      <div className="mx-auto max-w-6xl px-6 py-10">
+        <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
+          <div className="space-y-4">
+            <Link to="/" className="flex items-center gap-3 group">
+              <div className="transition-transform group-hover:scale-110">
+                <LogoIcon />
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="font-display text-xl font-bold tracking-tight">VirtuKey</span>
+                <span className="text-xs uppercase tracking-[0.3em] text-slate-500">Technologies</span>
+              </div>
+            </Link>
+            <p className="max-w-xs text-sm text-slate-600">
+              Software, systems, and AI solutions built for clarity, reliability, and real impact.
+            </p>
+          </div>
+          
+          <div className="flex flex-col gap-4 md:flex-row md:gap-12">
+            <div className="space-y-3">
+              <p className="font-mono text-xs uppercase tracking-[0.25em] text-slate-500">Navigation</p>
+              <nav className="flex flex-col gap-2 text-sm text-slate-700">
+                <Link to="/software" className="hover:text-ink transition-colors">Software</Link>
+                <Link to="/ai" className="hover:text-ink transition-colors">AI</Link>
+                <Link to="/story" className="hover:text-ink transition-colors">Our Story</Link>
+                <Link to="/contact" className="hover:text-ink transition-colors">Contact</Link>
+              </nav>
+            </div>
+            
+            <div className="space-y-3">
+              <p className="font-mono text-xs uppercase tracking-[0.25em] text-slate-500">Contact</p>
+              <div className="flex flex-col gap-2 text-sm text-slate-700">
+                <a href="mailto:anotida@virtukey.co.za" className="flex items-center gap-2 hover:text-ink transition-colors">
+                  <svg className="w-4 h-4 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="5" width="18" height="14" rx="2" />
+                    <path d="m3 7 9 6 9-6" />
+                  </svg>
+                  anotida@virtukey.co.za
+                </a>
+                <a href="tel:+27662309680" className="flex items-center gap-2 hover:text-ink transition-colors">
+                  <svg className="w-4 h-4 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 4h3l2 5-2.5 1.5a11 11 0 0 0 5 5L14 13l5 2v3a2 2 0 0 1-2 2 15 15 0 0 1-13-13 2 2 0 0 1 2-2Z" />
+                  </svg>
+                  +27 66 230 9680
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-slate-200 pt-6 md:flex-row">
+          <p className="text-xs text-slate-500">
+            © {currentYear} VirtuKey Technologies. All rights reserved.
+          </p>
+          <div className="flex items-center gap-4 text-xs text-slate-500">
+            <span className="font-mono tracking-wider">Built with purpose.</span>
+          </div>
+        </div>
+      </div>
+    </footer>
   )
 }
 
